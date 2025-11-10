@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "372786952763",
+    "project_id": "ace-interview-9b80f",
+    "storage_bucket": "ace-interview-9b80f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:372786952763:android:34508c8f7f0edefc97ba1e",
+        "android_client_info": {
+          "package_name": "com.example.ace_interview"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-E48sit3E5F__NSWx6MoKtftzLZYDMI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
