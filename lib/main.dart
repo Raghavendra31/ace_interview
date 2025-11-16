@@ -9,9 +9,9 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await dotenv.load(fileName: "api.env"); // <-- load env
+    await dotenv.load(fileName: ".env"); // <-- load from .env instead
   } catch (e) {
-    // env file missing or unreadable — continue but log for devr
+    // env file missing or unreadable — continue but log for dev
     debugPrint('Could not load api.env: $e');
   }
   await Firebase.initializeApp(
