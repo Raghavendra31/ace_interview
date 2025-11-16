@@ -21,7 +21,7 @@ class CompanyScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            // Search / Hint Card
+            // Search / Hint Cardr
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 2,

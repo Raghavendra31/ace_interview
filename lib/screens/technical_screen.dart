@@ -248,7 +248,7 @@ class _TechnicalScreenState extends State<TechnicalScreen> {
 
               const SizedBox(height: 14),
 
-              // question card
+              // question cardr
               Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 4,

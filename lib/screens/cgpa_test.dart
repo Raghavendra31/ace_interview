@@ -218,7 +218,7 @@ class _CgpaScreenState extends State<CgpaScreen> {
 
                         const SizedBox(height: 18),
 
-                        // Next button
+                        // Next buttonr
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(

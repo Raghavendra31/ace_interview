@@ -18,7 +18,7 @@ class _ResumeBuilderState extends State<ResumeBuilder> {
   final linkedinController = TextEditingController();
   final githubController = TextEditingController();
 
-  // Education
+  // Educationr
   final degreeController = TextEditingController();
   final branchController = TextEditingController();
   final collegeController = TextEditingController();

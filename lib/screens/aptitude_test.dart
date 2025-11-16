@@ -580,7 +580,7 @@ Return ONLY valid JSON (the array). Example:
 
             const SizedBox(height: 12),
 
-            // score summary
+            // score summaryr
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

@@ -87,7 +87,7 @@ class FinalReportScreen extends StatelessWidget {
           double gd = (data["gd_score"] as num?)?.toDouble() ?? 0.0;
           double tech = (data["technical_score"] as num?)?.toDouble() ?? 0.0;
 
-          // totals: cgpa(10) + aptitude(10) + gd(10) + tech(20) = 50
+          // totals: cgpa(10) + aptitude(10) + gd(10) + tech(20) = 50r
           double total = cgpa + aptitude + gd + tech;
           double percent = ((total / 50) * 100).clamp(0.0, 100.0);
           final level = _levelText(percent);

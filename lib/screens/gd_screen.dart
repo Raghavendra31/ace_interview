@@ -311,7 +311,7 @@ class _GDScreenState extends State<GDScreen> with SingleTickerProviderStateMixin
 
                 const SizedBox(width: 12),
 
-                // quick actions column
+                // quick actions columnr
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [

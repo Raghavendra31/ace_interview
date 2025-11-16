@@ -123,7 +123,7 @@ class JobRoleScreen extends StatelessWidget {
               ),
             ),
 
-            // quick action
+            // quick actionr
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

@@ -11,7 +11,7 @@ Future<void> main() async {
   try {
     await dotenv.load(fileName: "api.env"); // <-- load env
   } catch (e) {
-    // env file missing or unreadable — continue but log for dev
+    // env file missing or unreadable — continue but log for devr
     debugPrint('Could not load api.env: $e');
   }
   await Firebase.initializeApp(
