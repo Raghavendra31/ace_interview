@@ -6,10 +6,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:ace_interview/screens/aptitude_review_screen.dart';
 import 'gd_screen.dart'; // Import the GDScreen here
+final List<int> userAnswers = [];
 
 class AptitudeScreen extends StatefulWidget {
+  
   final double cgpaScore;
   const AptitudeScreen({super.key, required this.cgpaScore});
 
@@ -18,6 +20,7 @@ class AptitudeScreen extends StatefulWidget {
 }
 
 class _AptitudeScreenState extends State<AptitudeScreen> {
+  final List<int> userAnswers = [];
   int currentQuestion = 0;
   int selectedAnswer = -1;
   int aptitudeScore = 0;
@@ -149,6 +152,8 @@ class _AptitudeScreenState extends State<AptitudeScreen> {
 
   Future<void> submitAnswer() async {
     timer?.cancel();
+    userAnswers.add(selectedAnswer);
+
 
     if (selectedAnswer == questions[currentQuestion]['answer']) {
       aptitudeScore += 3;
@@ -183,15 +188,18 @@ class _AptitudeScreenState extends State<AptitudeScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GDScreen(
-                      cgpaScore: widget.cgpaScore,
-                      aptitudeScore: aptitudeScore,
-                    ),
-                  ),
-                );
+                Navigator.pushReplacement(
+                context,
+  MaterialPageRoute(
+    builder: (_) => AptitudeReviewScreen(
+      questions: questions,
+      userAnswers: userAnswers,
+      cgpaScore: widget.cgpaScore,
+      aptitudeScore: aptitudeScore,
+    ),
+  ),
+);
+
               },
               child: const Text('Continue'),
             ),
@@ -248,7 +256,7 @@ Return ONLY valid JSON (the array). Example:
         setState(() => isLoading = false);
         return;
       }
-
+      
       final map = jsonDecode(resp.body) as Map<String, dynamic>;
       final content = (map['choices'] as List).first['message']['content'] as String;
 

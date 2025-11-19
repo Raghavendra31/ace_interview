@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ace_interview/screens/cgpa_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:ace_interview/screens/cgpa_test.dart';
 
 class ResumeBuilder extends StatefulWidget {
   const ResumeBuilder({super.key});
@@ -35,6 +37,10 @@ class _ResumeBuilderState extends State<ResumeBuilder> {
   final _formKey = GlobalKey<FormState>();
   int resumeScore = 0;
 
+  // persistence helpers
+  final Map<TextEditingController, String> _fieldKeys = {};
+  final Map<TextEditingController, VoidCallback> _listeners = {};
+
   void calculateScore() {
     int temp = 0;
 
@@ -56,10 +62,67 @@ class _ResumeBuilderState extends State<ResumeBuilder> {
     if (achievementsController.text.isNotEmpty) temp += 1;
 
     setState(() => resumeScore = (temp / 2).clamp(0, 10).round());
+    // persist resume score
+    SharedPreferences.getInstance().then((p) => p.setInt('resumeScore', resumeScore));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // map controllers to keys
+    _fieldKeys.addAll({
+      fullNameController: 'fullName',
+      emailController: 'email',
+      phoneController: 'phone',
+      addressController: 'address',
+      linkedinController: 'linkedin',
+      githubController: 'github',
+      degreeController: 'degree',
+      branchController: 'branch',
+      collegeController: 'college',
+      graduationYearController: 'graduationYear',
+      cgpaController: 'cgpa',
+      skillsController: 'skills',
+      experienceController: 'experience',
+      projectsController: 'projects',
+      certificationsController: 'certifications',
+      achievementsController: 'achievements',
+    });
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    // restore fields
+    _fieldKeys.forEach((ctrl, key) {
+      final val = prefs.getString(key) ?? '';
+      ctrl.text = val;
+    });
+    // restore score
+    setState(() {
+      resumeScore = prefs.getInt('resumeScore') ?? resumeScore;
+    });
+    // attach listeners AFTER restoring to avoid immediate saves
+    _attachListeners();
+  }
+
+  void _attachListeners() {
+    _fieldKeys.forEach((ctrl, key) {
+      final listener = () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(key, ctrl.text);
+      };
+      _listeners[ctrl] = listener;
+      ctrl.addListener(listener);
+    });
   }
 
   @override
   void dispose() {
+    // remove listeners
+    _listeners.forEach((ctrl, listener) => ctrl.removeListener(listener));
+    _listeners.clear();
+    _fieldKeys.clear();
     fullNameController.dispose();
     emailController.dispose();
     phoneController.dispose();

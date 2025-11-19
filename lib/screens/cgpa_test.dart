@@ -3,7 +3,9 @@ import 'package:ace_interview/screens/aptitude_test.dart'; // Navigate here afte
 import 'dart:math' as math;
 
 class CgpaScreen extends StatefulWidget {
-  const CgpaScreen({super.key});
+  final double initialCgpa;
+  const CgpaScreen({super.key, this.initialCgpa = 0});
+  
 
   @override
   State<CgpaScreen> createState() => _CgpaScreenState();
