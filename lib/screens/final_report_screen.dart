@@ -210,7 +210,7 @@ class FinalReportScreen extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.picture_as_pdf),
-                          label: const Text("Generate PDF Report"),
+                          label: const Text("COMPLETED"),
                           style: ElevatedButton.styleFrom(backgroundColor: themeColor, padding: const EdgeInsets.symmetric(vertical: 14)),
                           onPressed: () {
                             // future: implement PDF generation

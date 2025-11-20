@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ace_interview/screens/aptitude_review_screen.dart';
 import 'gd_screen.dart'; // Import the GDScreen here
-final List<int> userAnswers = [];
+
 
 class AptitudeScreen extends StatefulWidget {
   
@@ -34,6 +34,27 @@ class _AptitudeScreenState extends State<AptitudeScreen> {
   final TextEditingController _aiKeyController = TextEditingController();
   final TextEditingController _aiCountController = TextEditingController(text: '5');
   final TextEditingController _aiTopicController = TextEditingController(text: 'general aptitude');
+
+  Future<http.Response> safePost(
+  Uri url, {
+  required Map<String, String> headers,
+  required String body,
+}) async {
+  int retries = 0;
+
+  while (retries < 3) {
+    final resp = await http.post(url, headers: headers, body: body);
+
+    if (resp.statusCode != 429) return resp; // Return immediately
+
+    // Retry delay
+    await Future.delayed(Duration(seconds: 2 * (retries + 1)));
+    retries++;
+  }
+
+  // Final attempt
+  return await http.post(url, headers: headers, body: body);
+}
 
   @override
   void initState() {
@@ -210,92 +231,105 @@ class _AptitudeScreenState extends State<AptitudeScreen> {
   }
 
   Future<void> generateQuestionsWithAI([String? apiKey, int count = 5, String topic = 'general aptitude']) async {
-    final usedKey = (apiKey?.trim().isNotEmpty ?? false) ? apiKey! : (dotenv.env['OPENAI_API_KEY'] ?? '');
-    if (usedKey.isEmpty) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Provide an API key or set OPENAI_API_KEY in .env')));
-      return;
-    }
+  final usedKey = (apiKey?.trim().isNotEmpty ?? false)
+      ? apiKey!
+      : (dotenv.env['OPENAI_API_KEY'] ?? '');
 
-    final prompt = '''
+  if (usedKey.isEmpty) {
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Provide an API key or set OPENAI_API_KEY in .env')));
+    }
+    return;
+  }
+
+  final prompt = '''
 You are an assistant that returns a JSON array of multiple-choice aptitude questions.
 Produce $count questions about "$topic". Each item must be an object with:
 - "question": string
 - "options": array of 4 strings
-- "answer": integer (0-based index of correct option)
+- "answer": integer (0-based index)
 
-Return ONLY valid JSON (the array). Example:
-[
-  {"question":"...","options":["A","B","C","D"],"answer":0},
-  ...
-]
+Return ONLY valid JSON array.
 ''';
 
-    try {
-      setState(() => isLoading = true);
+  try {
+    setState(() => isLoading = true);
 
-      final body = jsonEncode({
-        "model": "gpt-3.5-turbo",
-        "temperature": 0.6,
-        "messages": [
-          {"role": "user", "content": prompt}
-        ],
-        "max_tokens": 800,
-      });
+    final body = jsonEncode({
+      "model": "gpt-4o-mini",       // ✅ updated working model
+      "temperature": 0.6,
+      "messages": [
+        {"role": "user", "content": prompt}
+      ],
+      "max_tokens": 500,
+    });
 
-      final resp = await http.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
-        headers: {
-          'Authorization': 'Bearer $usedKey',
-          'Content-Type': 'application/json',
-        },
-        body: body,
-      );
+    // ✅ use safePost()
+    final resp = await safePost(
+      Uri.parse('https://api.openai.com/v1/chat/completions'),
+      headers: {
+        'Authorization': 'Bearer $usedKey',
+        'Content-Type': 'application/json',
+      },
+      body: body,
+    );
 
-      if (resp.statusCode != 200) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('API error: ${resp.statusCode}')));
-        setState(() => isLoading = false);
-        return;
+    if (resp.statusCode != 200) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('API error: ${resp.statusCode}')));
       }
-      
-      final map = jsonDecode(resp.body) as Map<String, dynamic>;
-      final content = (map['choices'] as List).first['message']['content'] as String;
-
-      // Attempt to extract JSON array from model output
-      final start = content.indexOf('[');
-      final end = content.lastIndexOf(']');
-      if (start == -1 || end == -1 || end <= start) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Unexpected AI response:\n$content')));
-        setState(() => isLoading = false);
-        return;
-      }
-      final jsonText = content.substring(start, end + 1);
-      final parsed = jsonDecode(jsonText) as List<dynamic>;
-
-      // Validate and add to Firestore
-      int added = 0;
-      for (final item in parsed) {
-        if (item is Map<String, dynamic>) {
-          final q = {
-            'question': item['question'] ?? '',
-            'options': List<String>.from(item['options'] ?? []),
-            'answer': item['answer'] ?? 0,
-          };
-          // add to Firestore
-          await FirebaseFirestore.instance.collection('aptitude_questions').add(q);
-          added++;
-        }
-      }
-
-      // refetch
-      await fetchQuestions();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added $added questions from AI')));
-    } catch (e, st) {
-      debugPrint('generateQuestionsWithAI error: $e\n$st');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('AI generation failed: $e')));
-    } finally {
-      if (mounted) setState(() => isLoading = false);
+      setState(() => isLoading = false);
+      return;
     }
+
+    final map = jsonDecode(resp.body);
+    final content = map['choices'][0]['message']['content'];
+
+    // Extract JSON
+    final start = content.indexOf('[');
+    final end = content.lastIndexOf(']');
+    if (start == -1 || end == -1) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Unexpected AI response')));
+      }
+      setState(() => isLoading = false);
+      return;
+    }
+
+    final parsed = jsonDecode(content.substring(start, end + 1));
+
+    // Save to Firestore
+    int added = 0;
+    for (final q in parsed) {
+      await FirebaseFirestore.instance.collection('aptitude_questions').add({
+        'question': q['question'],
+        'options': List<String>.from(q['options']),
+        'answer': q['answer'],
+      });
+      added++;
+    }
+
+    await fetchQuestions();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Added $added AI-generated questions')));
+    }
+
+  } catch (e, st) {
+    debugPrint('generateQuestionsWithAI error: $e\n$st');
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('AI generation failed: $e')));
+    }
+  } finally {
+    if (mounted) setState(() => isLoading = false);
   }
+}
+
 
   // small helper to show dialog for API key + options
   void _showAIGeneratorDialog() {

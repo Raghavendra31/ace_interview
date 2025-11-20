@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:ace_interview/screens/final_report_screen.dart'; // <- add this import
+import 'package:ace_interview/screens/final_report_screen.dart'; 
+import 'technical_answers_screen.dart';
 
 class TechnicalScreen extends StatefulWidget {
+  
   final String role;
   final String company;
 
@@ -18,8 +20,10 @@ class _TechnicalScreenState extends State<TechnicalScreen> {
   int selected = -1;
   int techScore = 0;
   bool loading = true;
+  List<int> userAnswers = [];
 
   List<Map<String, dynamic>> questions = [];
+  
 
   @override
   void initState() {
@@ -76,39 +80,53 @@ class _TechnicalScreenState extends State<TechnicalScreen> {
   }
 
   void submit() {
-    if (selected == questions[current]["answer"]) {
-      techScore += 2;
-    }
+  // Store the selected option
+  userAnswers.add(selected);
 
-    if (current < questions.length - 1) {
-      setState(() {
-        current++;
-        selected = -1;
-      });
-    } else {
-      saveTechScore();
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text("Technical Round Complete"),
-          content: Text("Your score: $techScore / 20"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const FinalReportScreen(),
-                  ),
-                );
-              },
-              child: Text("OK"),
-            )
-          ],
-        ),
-      );
-    }
+  // Increase score if correct
+  if (selected == questions[current]["answer"]) {
+    techScore += 2;
   }
+
+  // If more questions left → go to next question
+  if (current < questions.length - 1) {
+    setState(() {
+      current++;
+      selected = -1;
+    });
+  } else {
+    // Final question → save score + show dialog
+    saveTechScore();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Technical Round Complete"),
+        content: Text("Your score: $techScore / 20"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog first
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TechnicalAnswersScreen(
+                    questions: questions,
+                    userAnswers: userAnswers,
+                    techScore: techScore,
+                  ),
+                ),
+              );
+            },
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
+  }
+}
+
 
   Future<void> saveTechScore() async {
     final user = FirebaseAuth.instance.currentUser;
